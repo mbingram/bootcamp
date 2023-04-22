@@ -14,6 +14,8 @@ contract Token {
     // Mapping is a key/value pair and a state variable
     // We define the data type of the key and value, variable is balanceOf
     mapping(address => uint256) public balanceOf;
+    // first address is always msg.sender
+    mapping(address => mapping(address => uint256)) public allowance;
 
     // Send tokens
     // transfer functions must fire the Transfer event
@@ -24,6 +26,12 @@ contract Token {
         uint256 value
     );
     // indexed keyword makes it easier to filter events
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     constructor(
         string memory _name,
@@ -38,10 +46,10 @@ contract Token {
         balanceOf[msg.sender] = totalSupply;
     }
 
-    function transfer(
-        address _to,
-        uint256 _value
-    ) public returns (bool success) {
+    function transfer(address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
         // Require that sender has enough tokens to spend
         require(balanceOf[msg.sender] >= _value);
         require(_to != address(0));
@@ -52,7 +60,20 @@ contract Token {
 
         // emit event
         emit Transfer(msg.sender, _to, _value);
-
         return true;
     }
+
+    function approve(address _spender, uint256 _value)
+        public
+        returns(bool success)
+    {
+        require(_spender != address(0));
+        // nested mapping accessed with two sets of brackets
+        allowance[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+
 }
