@@ -10,21 +10,14 @@ contract Token {
     uint256 public decimals = 18;
     uint256 public totalSupply;
 
-    // Track balances
     // Mapping is a key/value pair and a state variable
     // We define the data type of the key and value, variable is balanceOf
     mapping(address => uint256) public balanceOf;
     // first address is always msg.sender
     mapping(address => mapping(address => uint256)) public allowance;
 
-    // Send tokens
-    // transfer functions must fire the Transfer event
     // events provide tracking and alerts for users who are subscribed to the event
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 value
-    );
+    event Transfer(address indexed from, address indexed to, uint256 value);
     // indexed keyword makes it easier to filter events
 
     event Approval(
@@ -46,27 +39,36 @@ contract Token {
         balanceOf[msg.sender] = totalSupply;
     }
 
-    function transfer(address _to, uint256 _value)
-        public
-        returns (bool success)
-    {
+    // transfer functions must fire the Transfer event
+    function transfer(
+        address _to,
+        uint256 _value
+    ) public returns (bool success) {
         // Require that sender has enough tokens to spend
         require(balanceOf[msg.sender] >= _value);
-        require(_to != address(0));
-        // Deduct tokens from sender
-        balanceOf[msg.sender] = balanceOf[msg.sender] - _value;
-        // Credit tokens to receiver
-        balanceOf[_to] = balanceOf[_to] + _value;
+        _transfer(msg.sender, _to, _value);
 
-        // emit event
-        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value)
-        public
-        returns(bool success)
-    {
+    function _transfer(
+        address _from,
+        address _to,
+        uint256 _value
+    ) internal {
+        require(_to != address(0));
+        // Deduct tokens from sender
+        balanceOf[_from] = balanceOf[_from] - _value;
+        // Credit tokens to receiver
+        balanceOf[_to] = balanceOf[_to] + _value;
+
+        emit Transfer(_from, _to, _value);
+    }
+
+    function approve(
+        address _spender,
+        uint256 _value
+    ) public returns (bool success) {
         require(_spender != address(0));
         // nested mapping accessed with two sets of brackets
         allowance[msg.sender][_spender] = _value;
@@ -75,5 +77,21 @@ contract Token {
         return true;
     }
 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public returns (bool success) {
+        // check approval
+        require(_value <= balanceOf[_from]);
+        require(_value <= allowance[_from][msg.sender]);
+
+        // reset allowance
+        allowance[_from][msg.sender] = allowance[_from][msg.sender] - _value;
+
+        // spend tokens
+        _transfer(_from, _to, _value);
+        return true;
+    }
 
 }
