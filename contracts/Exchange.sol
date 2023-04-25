@@ -11,8 +11,14 @@ contract Exchange {
 
     mapping(address => mapping(address => uint256)) public tokens; // args: token address, user address, tokens to be deposited
     mapping(uint256 => _Order) public orders; // this mapping is basically a database lookup for the _Order struct
+    mapping(uint256 => bool) public orderCancelled; // can't actually delete an order, but we can change this variable in the mappping
 
-    event Deposit(address token, address user, uint256 amount, uint256 balance);
+    event Deposit(
+        address token,
+        address user,
+        uint256 amount,
+        uint256 balance
+    );
     event Withdraw(
         address token,
         address user,
@@ -20,6 +26,15 @@ contract Exchange {
         uint256 balance
     );
     event Order(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp
+    );
+    event Cancel(
         uint256 id,
         address user,
         address tokenGet,
@@ -86,7 +101,8 @@ contract Exchange {
         uint256 _amountGive
     ) public {
         // require token balance
-        require(balanceOf(_tokenGive, msg.sender) >= _amountGive, 'insufficient balance');
+        require(
+            balanceOf(_tokenGive, msg.sender) >= _amountGive);
 
         // Instantiate an order
         orderCount = orderCount + 1;
@@ -110,5 +126,18 @@ contract Exchange {
             _amountGive,
             block.timestamp
         );
+    }
+
+    function cancelOrder(uint256 _id) public {
+        // Fetch the order
+        _Order storage _order = orders[_id]; // pulling this _order from storage using the orders[id]
+        // ensure the caller of the function is the owner
+        require(address(_order.user) == msg.sender);
+        // require that the order id matches the passed-in id
+        require(_order.id == _id);
+        // Cancel the order
+        orderCancelled[_id] = true;
+        // Emit a cancellation event
+        emit Cancel(_id, msg.sender, _order.tokenGet, _order.amountGet, _order.tokenGive, _order.amountGive, _order.timestamp);
     }
 }
