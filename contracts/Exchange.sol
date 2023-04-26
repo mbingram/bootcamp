@@ -12,6 +12,7 @@ contract Exchange {
     mapping(address => mapping(address => uint256)) public tokens; // args: token address, user address, tokens to be deposited
     mapping(uint256 => _Order) public orders; // this mapping is basically a database lookup for the _Order struct
     mapping(uint256 => bool) public orderCancelled; // can't actually delete an order, but we can change this variable in the mappping
+    mapping(uint256 => bool) public orderFilled; // marks whether the order has been filled
 
     event Deposit(
         address token,
@@ -41,6 +42,16 @@ contract Exchange {
         uint256 amountGet,
         address tokenGive,
         uint256 amountGive,
+        uint256 timestamp
+    );
+    event Trade(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        address creator,
         uint256 timestamp
     );
 
@@ -100,12 +111,12 @@ contract Exchange {
         address _tokenGive,
         uint256 _amountGive
     ) public {
-        // require token balance
-        require(
+        require( // require token balance
             balanceOf(_tokenGive, msg.sender) >= _amountGive);
 
-        // Instantiate an order
-        orderCount = orderCount + 1;
+        // increment orderCount
+        orderCount ++;
+
         orders[orderCount] = _Order(
             orderCount, // counter cache from state
             msg.sender, // user who made the order
@@ -140,4 +151,64 @@ contract Exchange {
         // Emit a cancellation event
         emit Cancel(_id, msg.sender, _order.tokenGet, _order.amountGet, _order.tokenGive, _order.amountGive, _order.timestamp);
     }
+
+    // Executing orders
+    function fillOrder(uint256 _id) public {
+        // 1. Order must be valid
+        require(_id > 0 && _id <= orderCount, 'order does not exist');
+        // 2. Order can't be filled
+        require(!orderFilled[_id]);
+        // 3. Order can't be cancelled
+        require(!orderCancelled[_id]);
+        // Fetch order
+        _Order storage _order = orders[_id];
+        // Swapping tokens (Trading)
+        _trade(// write internal function to hold trade logic
+            _order.id,
+            _order.user,
+            _order.tokenGet,
+            _order.amountGet,
+            _order.tokenGive,
+            _order.amountGive
+        );
+        // mark order as filled in mapping
+        orderFilled[_order.id] = true;
+    }
+
+    function _trade(
+        uint256 _orderId,
+        address _user,
+        address _tokenGet,
+        uint256 _amountGet,
+        address _tokenGive,
+        uint256 _amountGive
+    ) internal {
+        // fee is paid by user who filled order (msg.sender)
+        // fee is deducted from _amountGet
+        uint256 _feeAmount = (_amountGet * feePercent) / 100;
+
+        // Execute the trade
+        // access the tokens mapping // args: tokens[token address][user address]
+        tokens[_tokenGet][msg.sender] = tokens[_tokenGet][msg.sender] - (_amountGet + _feeAmount); // Take one token from first account 
+        tokens[_tokenGet][_user] = tokens[_tokenGet][_user] + _amountGet; // and give it to second account
+
+        // Charge fees
+        tokens[_tokenGet][feeAccount] = tokens[_tokenGet][feeAccount] + _feeAmount;
+
+        tokens[_tokenGive][_user] = tokens[_tokenGive][_user] - _amountGive; // subtract _amountGive from second account
+        tokens[_tokenGive][msg.sender] = tokens[_tokenGive][msg.sender] + _amountGive; // add _amountGive to first account
+
+        // Emit Trade event
+        emit Trade(
+            _orderId,
+            msg.sender,
+            _tokenGet,
+            _amountGet,
+            _tokenGive,
+            _amountGive,
+            _user,
+            block.timestamp
+        );
+    }
+
 }
