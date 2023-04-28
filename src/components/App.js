@@ -1,22 +1,26 @@
-import React, { useEffect } from 'react';
-import { ethers } from 'ethers';
-import TOKEN_ABI from '../abis/Token.json';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import config from '../config.json';
-import '../App.css';
+import {
+  loadProvider,
+  loadNetwork,
+  loadAccount,
+  loadToken
+} from '../store/interactions';
 
 export default function App() {
+  const dispatch = useDispatch()
 
   const loadBlockchainData = async () => {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-
-    // connect ethers to blockchain
-    // (on frontend) ethers allows us to talk to the blockchain via a provider
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const { chainId } = await provider.getNetwork()
-
-    // communicate with Token smart contract
-    const token = new ethers.Contract(config[chainId].mBC.address, TOKEN_ABI, provider) // (address, abi, provider)
-    const symbol = await token.symbol()
+    // fetch account/add to state
+    await loadAccount(dispatch)
+    // connect ethers to blockchain w/ provider/add provider to state
+    const provider = loadProvider(dispatch)
+    // fetch chainId/add to state
+    const chainId = await loadNetwork(provider, dispatch)
+    // fetch Token smart contract/add to state
+    const token = await loadToken(provider, config[chainId].mBC.address, dispatch)
+    await token.symbol()
   }
 
   useEffect(() => {
