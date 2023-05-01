@@ -5,22 +5,24 @@ import {
   loadProvider,
   loadNetwork,
   loadAccount,
-  loadToken
+  loadTokens,
+  loadExchange
 } from '../store/interactions';
 
 export default function App() {
   const dispatch = useDispatch()
 
   const loadBlockchainData = async () => {
-    // fetch account/add to state
-    await loadAccount(dispatch)
-    // connect ethers to blockchain w/ provider/add provider to state
-    const provider = loadProvider(dispatch)
-    // fetch chainId/add to state
-    const chainId = await loadNetwork(provider, dispatch)
-    // fetch Token smart contract/add to state
-    const token = await loadToken(provider, config[chainId].mBC.address, dispatch)
-    await token.symbol()
+    const provider = loadProvider(dispatch)    // connect ethers to blockchain w/ provider/add provider to state
+    const chainId = await loadNetwork(provider, dispatch)    // fetch chainId for current network/add to state
+    await loadAccount(provider, dispatch)    // fetch current account/add to state
+
+    const mBC = config[chainId].mBC     // fetch Token smart contracts/add to state
+    const mETH = config[chainId].mETH
+    await loadTokens(provider, [mBC.address, mETH.address], dispatch)
+
+    const exchangeConfig = config[chainId].exchange    // load exchange contract
+    await loadExchange(provider, exchangeConfig.address, dispatch)
   }
 
   useEffect(() => {
