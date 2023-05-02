@@ -4,10 +4,11 @@ import config from '../config.json';
 import {
   loadProvider,
   loadNetwork,
-  loadAccount,
   loadTokens,
+  loadAccount,
   loadExchange
 } from '../store/interactions';
+import Navbar from './Navbar';
 
 export default function App() {
   const dispatch = useDispatch()
@@ -15,7 +16,15 @@ export default function App() {
   const loadBlockchainData = async () => {
     const provider = loadProvider(dispatch)    // connect ethers to blockchain w/ provider/add provider to state
     const chainId = await loadNetwork(provider, dispatch)    // fetch chainId for current network/add to state
-    await loadAccount(provider, dispatch)    // fetch current account/add to state
+
+    // reload page when network changes
+    window.ethereum.on('chainChanged', () => {
+      window.location.reload()
+    })
+
+    window.ethereum.on('accountsChanged', () => {
+      loadAccount(provider, dispatch)
+    })
 
     const mBC = config[chainId].mBC     // fetch Token smart contracts/add to state
     const mETH = config[chainId].mETH
@@ -32,7 +41,7 @@ export default function App() {
   return (
     <div>
 
-      {/* Navbar */}
+      <Navbar />
 
       <main className='exchange grid'>
         <section className='exchange__section--left grid'>
