@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import config from '../config.json';
 import {
@@ -9,9 +9,16 @@ import {
   loadExchange
 } from '../store/interactions';
 import Navbar from './Navbar';
+import Markets from './Markets';
 
 export default function App() {
   const dispatch = useDispatch()
+
+  // let [provider, setProvider] = useState()
+  // let [chainId, setChainId] = useState()
+  // let [token, setToken] = useState()
+  // let [account, setAccount] = useState()
+  // let [exchange, setExchange] = useState()
 
   const loadBlockchainData = async () => {
     const provider = loadProvider(dispatch)    // connect ethers to blockchain w/ provider/add provider to state
@@ -46,7 +53,7 @@ export default function App() {
       <main className='exchange grid'>
         <section className='exchange__section--left grid'>
 
-          {/* Markets */}
+          <Markets />
 
           {/* Balance */}
 

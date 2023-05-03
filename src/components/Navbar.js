@@ -7,6 +7,7 @@ import eth from '../assets/eth.svg'
 import config from '../config.json'
 
 export default function Navbar() {
+// export default function Navbar({provider, account, chainId}) {
     const provider = useSelector(state => state.provider.connection)
     const chainId = useSelector(state => state.provider.chainId)
     const account = useSelector(state => state.provider.account)
