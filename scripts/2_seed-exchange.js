@@ -1,5 +1,4 @@
 const { ethers } = require("hardhat");
-
 const config = require('../src/config.json')
 
 const tokens = (n) => {
@@ -70,7 +69,6 @@ async function main() {
 
     /////////////////////////////////////////////////////////////
     // Seed a Cancelled Order
-    //
 
     // User 1 makes order to get tokens
     let orderId
@@ -135,7 +133,6 @@ async function main() {
 
     /////////////////////////////////////////////////////////////
     // Seed Open Orders
-    //
 
     // User 1 makes 10 orders
     for (let i = 1; i <= 10; i++) {

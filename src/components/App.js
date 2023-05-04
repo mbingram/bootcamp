@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import config from '../config.json';
 import {
   loadProvider,
   loadNetwork,
   loadTokens,
   loadAccount,
-  loadExchange
+  loadExchange,
+  subscribeToEvents
 } from '../store/interactions';
 import Navbar from './Navbar';
 import Markets from './Markets';
@@ -34,12 +35,15 @@ export default function App() {
       loadAccount(provider, dispatch)
     })
 
-    const mBC = config[chainId].mBC     // fetch Token smart contracts/add to state
+    // fetch Token smart contracts/add to state
+    const mBC = config[chainId].mBC
     const mETH = config[chainId].mETH
     await loadTokens(provider, [mBC.address, mETH.address], dispatch)
-
-    const exchangeConfig = config[chainId].exchange    // load exchange contract
-    await loadExchange(provider, exchangeConfig.address, dispatch)
+    // load Exchange to smart contract
+    const exchangeConfig = config[chainId].exchange
+    const exchange = await loadExchange(provider, exchangeConfig.address, dispatch)
+    // listen to events
+    subscribeToEvents(exchange, dispatch)
   }
 
   useEffect(() => {

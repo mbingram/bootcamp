@@ -48,6 +48,14 @@ export const loadTokens = async (provider, addresses, dispatch) => {
 export const loadExchange = async (provider, address, dispatch) => {
     const exchange = new ethers.Contract(address, EXCHANGE_ABI, provider);
     dispatch({ type: 'EXCHANGE_LOADED', exchange })
+
+    return exchange
+}
+
+export const subscribeToEvents = (exchange, dispatch) => {
+    exchange.on('Deposit', (token, user, amount, balance, event) => {
+        dispatch({ type: 'TRANSFER_SUCCESS', event })
+    })
 }
 
 export const loadBalances = async (exchange, tokens, account, dispatch) => {
@@ -63,4 +71,24 @@ export const loadBalances = async (exchange, tokens, account, dispatch) => {
     balance = ethers.utils.formatUnits(await exchange.balanceOf(tokens[1].address, account), 18)
     dispatch({ type: 'EXCHANGE_TOKEN_2_BALANCE_LOADED', balance })
 
+}
+
+export const transferTokens = async (provider, exchange, transferType, token, amount, dispatch) => {
+    let transaction
+    dispatch({ type: 'TRANSFER_REQUEST' })
+    // fetch signer from contract
+    try {
+        const signer = await provider.getSigner()
+        // parse amount to string
+        const amountToTransfer = ethers.utils.parseUnits(amount.toString(), 18)
+        // approve token
+        transaction = await token.connect(signer).approve(exchange.address, amountToTransfer)
+        await transaction.wait()
+        // deposit token after approval
+        transaction = await exchange.connect(signer).depositToken(token.address, amountToTransfer)
+        await transaction.wait()
+
+    } catch(error){
+        dispatch({ type: 'TRANSFER_FAIL' })
+    }
 }
