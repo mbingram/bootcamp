@@ -10,6 +10,7 @@ import {
 } from '../store/interactions';
 import Navbar from './Navbar';
 import Markets from './Markets';
+import Balance from './Balance';
 
 export default function App() {
   const dispatch = useDispatch()
@@ -55,7 +56,7 @@ export default function App() {
 
           <Markets />
 
-          {/* Balance */}
+          <Balance />
 
           {/* Order */}
 

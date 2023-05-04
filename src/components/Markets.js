@@ -8,12 +8,8 @@ export default function Markets() {
 
     const provider = useSelector(state => state.provider.connection)
     const chainId = useSelector(state => state.provider.chainId)
-    const account = useSelector(state => state.provider.account)
-    const balance = useSelector(state => state.provider.balance)
 
     const marketHandler = async (e) => {
-        const addresses = (e.target.value).split(',')
-        console.log(addresses)
         await loadTokens(provider, (e.target.value).split(','), dispatch)
     }
 

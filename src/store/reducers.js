@@ -26,13 +26,13 @@ export const provider = (state = {}, action) => {
 }
 
 const DEFAULT_TOKENS_STATE = {
-    loaded: false, 
+    loaded: false,
     contracts: [],
     symbols: []
 }
 
 export const tokens = (state = DEFAULT_TOKENS_STATE, action) => {
-    switch(action.type){
+    switch (action.type) {
         case 'TOKEN_1_LOADED':
             return {
                 ...state,
@@ -40,6 +40,12 @@ export const tokens = (state = DEFAULT_TOKENS_STATE, action) => {
                 contracts: [action.token],
                 symbols: [action.symbol]
             }
+        case 'TOKEN_1_BALANCE_LOADED':
+            return {
+                ...state,
+                balances: [action.balance]
+            }
+
         case 'TOKEN_2_LOADED':
             return {
                 ...state,
@@ -47,20 +53,38 @@ export const tokens = (state = DEFAULT_TOKENS_STATE, action) => {
                 contracts: [...state.contracts, action.token],
                 symbols: [...state.symbols, action.symbol]
             }
-            default:
-                return state
+
+        case 'TOKEN_2_BALANCE_LOADED':
+            return {
+                ...state,
+                balances: [...state.balances, action.balance]
+            }
+
+        default:
+            return state
     }
 }
 
 export const exchange = (state = { loaded: false, contract: {} }, action) => {
-    switch(action.type){
+    switch (action.type) {
         case 'EXCHANGE_LOADED':
             return {
                 ...state,
                 loaded: true,
                 contract: action.exchange
             }
-            default:
-                return state
+        // BALANCE CASES
+        case 'EXCHANGE_TOKEN_1_BALANCE_LOADED':
+            return {
+                ...state,
+                balances: [action.balance]
+            }
+        case 'EXCHANGE_TOKEN_2_BALANCE_LOADED':
+            return {
+                ...state,
+                balances: [...state.balances, action.balance]
+            }
+        default:
+            return state
     }
 }
