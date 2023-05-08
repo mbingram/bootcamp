@@ -44,6 +44,17 @@ export default function Balance() {
             setToken2TransferAmount(0)
         }
     }
+    
+    const withdrawalHandler = async (e, token) => {
+        e.preventDefault()
+        if (token.address === tokens[0].address) {
+            await transferTokens(provider, exchange, 'Withdraw', token, token1TransferAmount, dispatch)
+            setToken1TransferAmount(0)
+        } else {
+            await transferTokens(provider, exchange, 'Withdraw', token, token2TransferAmount, dispatch)
+            setToken2TransferAmount(0)
+        }
+    }
 
     const tabHandler = (e) => {
         if(e.target.className !== depositRef.current.className){
@@ -83,7 +94,7 @@ export default function Balance() {
                     <p><small>Exchange</small><br />{exchangeBalances && exchangeBalances[0]}</p>
                 </div>
 
-                <form onSubmit={(e) => depositHandler(e, tokens[0])}>
+                <form onSubmit={isDeposit ? (e) => depositHandler(e, tokens[0]) : (e) => withdrawalHandler(e, tokens[0])}>
                     <label htmlFor="token0">{symbols && symbols[0]} Amount</label>
                     <input
                         value={token1TransferAmount === 0 ? '' : token1TransferAmount}
@@ -113,7 +124,7 @@ export default function Balance() {
                     <p><small>Exchange</small><br />{exchangeBalances && exchangeBalances[1]}</p>
                 </div>
 
-                <form onSubmit={(e) => depositHandler(e, tokens[1])}>
+                <form onSubmit={isDeposit ? (e) => depositHandler(e, tokens[1]) : (e) => withdrawalHandler(e, tokens[1])}>
                     <label htmlFor="token1">{symbols && symbols[1]} Amount</label>
                     <input
                         value={token2TransferAmount === 0 ? '' : token2TransferAmount}
