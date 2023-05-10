@@ -81,6 +81,30 @@ export const loadBalances = async (exchange, tokens, account, dispatch) => {
 
 }
 
+// LOAD ALL ORDERS
+export const loadAllOrders = async (provider, exchange, dispatch) => {
+    // block is the current block
+    const block = await provider.getBlockNumber()
+
+    // Fetch cancelled orders
+    const cancelStream = await exchange.queryFilter('Cancel', 0, block)
+    const cancelledOrders = cancelStream.map(event => event.args)
+
+    dispatch({ type: 'CANCELLED_ORDERS_LOADED', cancelledOrders })
+
+    // Fetch filled orders
+    const tradeStream = await exchange.queryFilter('Trade', 0, block)
+    const filledOrders = tradeStream.map(event => event.args)
+
+    dispatch({ type: 'FILLED_ORDERS_LOADED', filledOrders })
+
+    // Fetch all orders
+    const orderStream = await exchange.queryFilter('Order', 0, block) // contract.queryFilter( event, from block/hash, to block/hash)
+    const allOrders = orderStream.map(event => event.args) // returns the arguments from the event itself
+
+    dispatch({ type: 'ALL_ORDERS_LOADED', allOrders })
+}
+
 export const transferTokens = async (provider, exchange, transferType, token, amount, dispatch) => {
     let transaction
     dispatch({ type: 'TRANSFER_REQUEST' })
