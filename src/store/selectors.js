@@ -32,7 +32,7 @@ export const myOpenOrdersSelector = createSelector(
     tokens,
     openOrders,
     (account, tokens, orders) => {
-        if(!tokens[0] || !tokens[1]){ return }
+        if (!tokens[0] || !tokens[1]) { return }
 
         // filter orders created by current account
         orders = orders.filter((o) => o.user === account)
@@ -49,7 +49,7 @@ export const myOpenOrdersSelector = createSelector(
 )
 
 const decorateMyOpenOrders = (orders, tokens) => {
-    return(
+    return (
         orders.map((order) => {
             order = decorateOrder(order, tokens) // creates values for token0Amount/token1Amount/tokenPrice/formattedTimestamp
             order = decorateMyOpenOrder(order, tokens)
@@ -61,7 +61,7 @@ const decorateMyOpenOrders = (orders, tokens) => {
 const decorateMyOpenOrder = (order, tokens) => {
     let orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell' // if token is 2nd in list, it is a buy order (and 1st in list for sell)
 
-    return({
+    return ({
         ...order,
         orderType,
         orderTypeClass: (orderType === 'buy' ? GREEN : RED)
@@ -119,7 +119,7 @@ const decorateFilledOrders = (orders, tokens) => {
     // track previous order to compare history
     let previousOrder = orders[0]
 
-    return(
+    return (
         orders.map((order) => {
             // decorate each individual order
             order = decorateOrder(order, tokens)
@@ -131,7 +131,7 @@ const decorateFilledOrders = (orders, tokens) => {
 }
 
 const decorateFilledOrder = (order, previousOrder) => {
-    return({
+    return ({
         ...order,
         tokenPriceClass: tokenPriceClass(order.tokenPrice, order.id, previousOrder)
     })
@@ -139,15 +139,63 @@ const decorateFilledOrder = (order, previousOrder) => {
 
 const tokenPriceClass = (tokenPrice, orderId, previousOrder) => {
     // check if there is an existing previousOrder
-    if(previousOrder.id === orderId){
+    if (previousOrder.id === orderId) {
         return GREEN // assign GREEN class if only one order exists
     }
 
-    if(previousOrder.tokenPrice <= tokenPrice){
+    if (previousOrder.tokenPrice <= tokenPrice) {
         return GREEN // assign GREEN class if order price is higher than previous order
     } else {
         return RED // assign RED class if order price is lower than previous order
     }
+}
+
+// MY FILLED ORDERS
+export const myFilledOrdersSelector = createSelector(
+    account,
+    tokens,
+    filledOrders,
+    (account, tokens, orders) => {
+        if (!tokens[0] || !tokens[1]) { return }
+        // find our orders
+        // each order has a creator (person who made order) and a user (person who filled the order)
+        orders = orders.filter((o) => o.user === account || o.creator === account) // filter to only return orders that pertain to account
+        orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address) // filter to only return orders that match current trading pair
+        orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address) // filter for both trading pairs
+        // sort by date descending
+        orders = orders.sort((a, b) => b.timestamp - a.timestamp)
+        // decorate orders - add display attributes
+        orders = decorateMyFilledOrders(orders, account, tokens)
+
+        return orders
+    }
+)
+
+const decorateMyFilledOrders = (orders, account, tokens) => {
+    return (
+        orders.map((order) => {
+            order = decorateOrder(order, tokens)
+            order = decorateMyFilledOrder(order, account, tokens)
+            return order
+        })
+    )
+}
+
+const decorateMyFilledOrder = (order, account, tokens) => {
+    const myOrder = order.creator === account
+
+    let orderType
+    if(myOrder){ // if it is my order (creator), it is a buy order
+        orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell'
+    } else { // if it is not my order (creator), it is a sell order
+        orderType = order.tokenGive === tokens[1].address ? 'sell' : 'buy'
+    }
+    return ({
+        ...order,
+        orderType,
+        orderClass: (orderType === 'buy' ? GREEN : RED), // color code for buy and sell orders
+        orderSign: (orderType === 'buy' ? '+' : '-') // positive or negative symbol for buy vs sell
+    })
 }
 
 // ORDER BOOK
@@ -207,7 +255,7 @@ export const priceChartSelector = createSelector(
     filledOrders,
     tokens,
     (orders, tokens) => {
-        if (!tokens[0] || !tokens[1]) {return null}
+        if (!tokens[0] || !tokens[1]) { return null }
         // filter orders by selected tokens
         orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
         orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
@@ -224,7 +272,7 @@ export const priceChartSelector = createSelector(
         // get second to last order price
         const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0)
 
-        return({
+        return ({
             lastPrice,
             lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-'),
             series: [{
