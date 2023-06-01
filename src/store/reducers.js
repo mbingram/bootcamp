@@ -132,6 +132,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                     isSuccessful: true
                 },
                 cancelledOrders: {
+                    ...state.cancelledOrders,
                     data: [
                         ...state.cancelledOrders.data,
                         action.order
