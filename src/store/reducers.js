@@ -75,6 +75,12 @@ const DEFAULT_EXCHANGE_STATE = {
         loaded: false,
         data: []
     },
+    filledOrders: {
+        data: []
+    },
+    cancelledOrders: {
+        data: []
+    },
     events: []
 }
 
@@ -150,6 +156,50 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                     isError: true
                 }
             }
+            // FILLING ORDERS
+            case 'ORDER_FILL_REQUEST':
+                return {
+                    ...state,
+                    transaction: {
+                        transactionType: 'Fill Order',
+                        isPending: true,
+                        isSuccessful: false
+                    }
+                }
+            case 'ORDER_FILL_SUCCESS':
+                // Prevent duplicate orders
+                index = state.filledOrders.data.findIndex(order => order.id.toString() === action.order.id.toString()) // look to see if index exists previously in state
+
+                if(index === -1){ // if index does not exist yet in state
+                    data = [...state.filledOrders.data, action.order]  // add it to state (data)
+                } else {
+                    data = state.filledOrders.data // otherwise state (data) is unchanged
+                }
+
+                return {
+                    ...state,
+                    transaction: {
+                        transactionType: 'Fill Order',
+                        isPending: false,
+                        isSuccessful: true
+                    },
+                    filledOrders: {
+                        ...state.filledOrders,
+                        data
+                    },
+                    events: [action.event, ...state.events]
+                }
+            case 'ORDER_FILL_FAIL':
+                return {
+                    ...state,
+                    transaction: {
+                        transactionType: 'Fill Order',
+                        isPending: false,
+                        isSuccessful: false,
+                        isError: true
+                    }
+                }
+
         // BALANCE CASES
         case 'EXCHANGE_TOKEN_1_BALANCE_LOADED':
             return {
